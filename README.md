@@ -16,11 +16,5 @@ An intelligent research assistant built using **Streamlit**, **Langchain**, and 
 
 ---
 
-## 📂 File Structure
+![{A874E54F-B92A-405D-B186-3D13A7F4E251}](https://github.com/user-attachments/assets/8400e284-1057-437b-a310-eb208204fe82)
 
-ai-research-assistant/
-├── app.py
-├── requirements.txt
-├── .env.example
-├── README.md
-└── sessions/
