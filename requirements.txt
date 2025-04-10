@@ -1,0 +1,10 @@
+streamlit
+langchain
+langchain-community
+langchain-groq
+python-dotenv
+uuid
+chromadb
+huggingface-hub
+pypdf
+tiktoken
