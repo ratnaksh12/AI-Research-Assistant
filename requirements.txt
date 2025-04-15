@@ -2,5 +2,8 @@ PyMuPDF
 streamlit
 langchain
 langchain-community
+langchain-core
+langchain-groq
+chromadb
 openai
 groq
