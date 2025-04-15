@@ -10,9 +10,14 @@ import os
 import uuid
 from datetime import datetime
 import json
+from sentence_transformers import SentenceTransformer
+
+# Cache the model loading function
+@st.cache_resource
+def load_model():
+    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-
 
 st.set_page_config(page_title="AI Research Assistant", layout="wide")
 st.title("AI-Powered Research Assistant")
@@ -49,7 +54,10 @@ uploaded_files = st.file_uploader("Upload one or more research papers (PDFs)", t
 
 if uploaded_files:
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    # Use the cached model function to load embeddings
+    embeddings_model = load_model()
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2", embedding_model=embeddings_model)
 
     all_texts = []
     for uploaded_file in uploaded_files:
