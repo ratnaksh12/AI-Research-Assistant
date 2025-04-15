@@ -4,7 +4,7 @@ langchain
 langchain-community
 langchain-core
 langchain-groq
-chromadb
+chromadb==0.3.21
 openai
 groq
 transformers
