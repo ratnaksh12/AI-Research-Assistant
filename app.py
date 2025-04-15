@@ -48,6 +48,9 @@ if username:
 uploaded_files = st.file_uploader("Upload one or more research papers (PDFs)", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
     all_texts = []
     for uploaded_file in uploaded_files:
         file_id = str(uuid.uuid4())
@@ -60,11 +63,6 @@ if uploaded_files:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         texts = text_splitter.split_documents(documents)
         all_texts.extend(texts)
-
-    
-     os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-
-     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     vectordb = Chroma.from_documents(all_texts, embedding=embeddings, persist_directory="db")
     vectordb.persist()
