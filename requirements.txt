@@ -1,11 +1,9 @@
 streamlit
 langchain
 langchain-community
+langchain-core
 langchain-groq
-sentence-transformers
-transformers
-torch
-faiss-cpu
 chromadb
-PyPDF2
 python-dotenv
+pdfminer.six
+sentence-transformers
