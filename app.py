@@ -1,17 +1,16 @@
 import streamlit as st
+import faiss
+import numpy as np
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
-from langchain_groq import ChatGroq  # type: ignore
-from langchain.prompts import PromptTemplate
+from langchain_groq import ChatGroq
 import os
 import uuid
-from datetime import datetime
 import json
-import faiss
-import numpy as np
+from datetime import datetime
+
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
 os.environ["LANGCHAIN_ENDPOINT"] = ""
 
@@ -23,14 +22,12 @@ st.title("AI-Powered Research Assistant")
 # Session State Initialization
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if "vectordb" not in st.session_state:
-    st.session_state.vectordb = None
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
-# Login Simulation (replace with Firebase/Auth for production)
+# Login Simulation
 username = st.text_input("Enter your name to start or continue a session")
 if username:
     session_file = f"sessions/{username}_session.json"
@@ -57,7 +54,6 @@ if uploaded_files:
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     all_texts = []
-    embeddings_list = []
     for uploaded_file in uploaded_files:
         file_id = str(uuid.uuid4())
         file_path = f"temp_{file_id}.pdf"
@@ -70,51 +66,25 @@ if uploaded_files:
         texts = text_splitter.split_documents(documents)
         all_texts.extend(texts)
 
-        # Generate embeddings for each text chunk
-        embeddings_list.extend([embeddings.embed_document(doc.page_content) for doc in texts])
+    # Create FAISS index
+    faiss_index = faiss.IndexFlatL2(embeddings.vector_size)
+    embeddings_matrix = np.array([embeddings.embed_document(text.page_content) for text in all_texts])
+    faiss_index.add(embeddings_matrix)
 
-    # Convert the embeddings to a numpy array for FAISS
-    embeddings_array = np.array(embeddings_list).astype('float32')
-
-    # Build FAISS index
-    dim = embeddings_array.shape[1]  # Dimension of the embeddings
-    faiss_index = faiss.IndexFlatL2(dim)  # Using L2 distance for similarity
-    faiss_index.add(embeddings_array)
-
-    # Store the FAISS index in session state
-    st.session_state.vectordb = faiss_index
-    st.session_state.all_texts = all_texts
+    # Save FAISS index to disk
+    faiss.write_index(faiss_index, "faiss_index.index")
+    
+    st.session_state.retriever = faiss_index  # Set the retriever to FAISS index
     st.success("PDFs processed and stored successfully!")
 
-# Document Summary Generator
-if uploaded_files and st.button("Generate Summary"):
-    all_text = "\n".join([doc.page_content for doc in documents])
-    summary_prompt = PromptTemplate.from_template("Summarize the following document in simple terms:\n{text}")
-    llm = ChatGroq(temperature=0, groq_api_key=GROQ_API_KEY, model_name="llama3-70b-8192")
-
-    summary = llm.predict(summary_prompt.format(text=all_text[:3000]))  # Limit text size
-    st.markdown("### Document Summary")
-    st.write(summary)
-
 # QA Chat
-if st.session_state.vectordb:
+if st.session_state.retriever:
     llm = ChatGroq(temperature=0, groq_api_key=GROQ_API_KEY, model_name="llama3-70b-8192")
+
+    qa_chain = ConversationalRetrievalChain.from_llm(llm, st.session_state.retriever, return_source_documents=True)
 
     query = st.text_input("Ask a question about your documents")
     if query:
-        # Convert the query to embedding
-        query_embedding = embeddings.embed_query(query)
-        query_embedding = np.array(query_embedding).astype('float32')
-
-        # Search the FAISS index for the nearest neighbors
-        _, indices = st.session_state.vectordb.search(query_embedding, k=3)  # Get top 3 most similar texts
-
-        # Collect the most similar texts
-        retrieved_docs = [st.session_state.all_texts[idx] for idx in indices]
-
-        # Create a Conversational Retrieval Chain
-        qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retrieved_docs, return_source_documents=True)
-
         result = qa_chain({
             "question": query,
             "chat_history": st.session_state.chat_history
