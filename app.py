@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain_groq import ChatGroq  # type: ignore
@@ -55,7 +55,7 @@ if uploaded_files:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
 
-        loader = PyPDFLoader(file_path)
+        loader = PyMuPDFLoader(file_path)
         documents = loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         texts = text_splitter.split_documents(documents)
