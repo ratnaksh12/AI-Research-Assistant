@@ -2,9 +2,9 @@ streamlit
 langchain
 langchain-community
 langchain-groq
-python-dotenv
-uuid
+sentence-transformers
+transformers
+torch
 chromadb
-huggingface-hub
-pypdf
-tiktoken
+PyPDF2
+python-dotenv
