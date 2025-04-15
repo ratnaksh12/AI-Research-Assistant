@@ -11,4 +11,4 @@ transformers==4.38.2
 torch
 sentence-transformers==2.6.1
 pydantic==1.10.13
-langsmith==0.0.69
+langsmith>=0.1.17,<0.2.0
