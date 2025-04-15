@@ -10,6 +10,8 @@ import os
 import uuid
 from datetime import datetime
 import json
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
+os.environ["LANGCHAIN_ENDPOINT"] = ""
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
