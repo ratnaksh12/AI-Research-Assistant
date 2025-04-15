@@ -1,10 +1,15 @@
 streamlit==1.32.2
 PyMuPDF==1.23.9
+openai
+groq
 langchain==0.1.14
 langchain-community==0.0.32
 langchain-core==0.1.47
 langchain-groq==0.0.1
 chromadb==0.3.21
+hnswlib==0.8.0
+uvicorn==0.29.0
+lz4==4.3.2
 sentence-transformers==2.6.1
 transformers==4.38.2
 torch==2.2.1
