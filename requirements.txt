@@ -7,3 +7,5 @@ langchain-groq
 chromadb
 openai
 groq
+transformers
+torch
