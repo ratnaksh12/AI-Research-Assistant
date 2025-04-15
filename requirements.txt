@@ -1,9 +1,6 @@
+PyMuPDF
 streamlit
 langchain
 langchain-community
-langchain-core
-langchain-groq
-chromadb
-python-dotenv
-pdfminer.six
-sentence-transformers
+openai
+groq
