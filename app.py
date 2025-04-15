@@ -10,12 +10,6 @@ import os
 import uuid
 from datetime import datetime
 import json
-from sentence_transformers import SentenceTransformer
-
-# Cache the model loading function
-@st.cache_resource
-def load_model():
-    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
@@ -42,7 +36,7 @@ if username:
         with open(session_file, "r") as f:
             saved_data = json.load(f)
             chat_history_raw = saved_data.get("chat_history", [])
-            st.session_state.chat_history = [tuple(pair) for pair in chat_history_raw]  # Convert list -> tuple
+            st.session_state.chat_history = [tuple(pair) for pair in chat_history_raw]
             st.success(f"Welcome back, {username}!")
     else:
         with open(session_file, "w") as f:
@@ -55,9 +49,8 @@ uploaded_files = st.file_uploader("Upload one or more research papers (PDFs)", t
 if uploaded_files:
     os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
-    # Use the cached model function to load embeddings
-    embeddings_model = load_model()
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2", embedding_model=embeddings_model)
+    # Use only model_name (no manual loading)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     all_texts = []
     for uploaded_file in uploaded_files:
@@ -103,7 +96,6 @@ if st.session_state.retriever:
 
         st.session_state.chat_history.append((query, result["answer"]))
 
-        # Save as list (JSON-compatible, will convert back to tuple on load)
         if username:
             with open(session_file, "w") as f:
                 json.dump({"chat_history": st.session_state.chat_history}, f)
