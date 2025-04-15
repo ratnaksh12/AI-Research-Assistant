@@ -1,13 +1,13 @@
 PyMuPDF
 streamlit
-langchain
-langchain-community
-langchain-core
+langchain==0.1.14
+langchain-community==0.0.32
+langchain-core==0.1.47
 langchain-groq
-chromadb
+chromadb==0.3.21
 openai
 groq
-transformers
+transformers==4.38.2
 torch
-sentence-transformers
-i have already added like this
+sentence-transformers==2.6.1
+pydantic==1.10.13
