@@ -5,6 +5,7 @@ langchain-groq
 sentence-transformers
 transformers
 torch
+faiss-cpu
 chromadb
 PyPDF2
 python-dotenv
