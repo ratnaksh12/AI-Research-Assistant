@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
@@ -10,6 +10,8 @@ import os
 import uuid
 from datetime import datetime
 import json
+import faiss
+import numpy as np
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
 os.environ["LANGCHAIN_ENDPOINT"] = ""
 
@@ -55,6 +57,7 @@ if uploaded_files:
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     all_texts = []
+    embeddings_list = []
     for uploaded_file in uploaded_files:
         file_id = str(uuid.uuid4())
         file_path = f"temp_{file_id}.pdf"
@@ -67,10 +70,20 @@ if uploaded_files:
         texts = text_splitter.split_documents(documents)
         all_texts.extend(texts)
 
-    vectordb = Chroma.from_documents(all_texts, embedding=embeddings, persist_directory="db")
-    vectordb.persist()
-    st.session_state.vectordb = vectordb
-    st.session_state.retriever = vectordb.as_retriever()
+        # Generate embeddings for each text chunk
+        embeddings_list.extend([embeddings.embed_document(doc.page_content) for doc in texts])
+
+    # Convert the embeddings to a numpy array for FAISS
+    embeddings_array = np.array(embeddings_list).astype('float32')
+
+    # Build FAISS index
+    dim = embeddings_array.shape[1]  # Dimension of the embeddings
+    faiss_index = faiss.IndexFlatL2(dim)  # Using L2 distance for similarity
+    faiss_index.add(embeddings_array)
+
+    # Store the FAISS index in session state
+    st.session_state.vectordb = faiss_index
+    st.session_state.all_texts = all_texts
     st.success("PDFs processed and stored successfully!")
 
 # Document Summary Generator
@@ -84,13 +97,24 @@ if uploaded_files and st.button("Generate Summary"):
     st.write(summary)
 
 # QA Chat
-if st.session_state.retriever:
+if st.session_state.vectordb:
     llm = ChatGroq(temperature=0, groq_api_key=GROQ_API_KEY, model_name="llama3-70b-8192")
-
-    qa_chain = ConversationalRetrievalChain.from_llm(llm, st.session_state.retriever, return_source_documents=True)
 
     query = st.text_input("Ask a question about your documents")
     if query:
+        # Convert the query to embedding
+        query_embedding = embeddings.embed_query(query)
+        query_embedding = np.array(query_embedding).astype('float32')
+
+        # Search the FAISS index for the nearest neighbors
+        _, indices = st.session_state.vectordb.search(query_embedding, k=3)  # Get top 3 most similar texts
+
+        # Collect the most similar texts
+        retrieved_docs = [st.session_state.all_texts[idx] for idx in indices]
+
+        # Create a Conversational Retrieval Chain
+        qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retrieved_docs, return_source_documents=True)
+
         result = qa_chain({
             "question": query,
             "chat_history": st.session_state.chat_history
