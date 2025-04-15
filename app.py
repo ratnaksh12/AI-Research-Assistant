@@ -61,7 +61,8 @@ if uploaded_files:
         texts = text_splitter.split_documents(documents)
         all_texts.extend(texts)
 
-    embeddings = HuggingFaceEmbeddings()
+    
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectordb = Chroma.from_documents(all_texts, embedding=embeddings, persist_directory="db")
     vectordb.persist()
     st.session_state.vectordb = vectordb
