@@ -10,13 +10,9 @@ import os
 import uuid
 from datetime import datetime
 import json
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
-# Set your Groq API key from .env file
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 st.set_page_config(page_title="AI Research Assistant", layout="wide")
 st.title("AI-Powered Research Assistant")
