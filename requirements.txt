@@ -1,6 +1,6 @@
 faiss-cpu==1.7.3
 langchain==0.1.14
-langchain-community==0.0.32
+langchain-community==0.0.30  # Try an older version
 langchain-core==0.1.47
 langchain-groq
 chromadb==0.3.10
