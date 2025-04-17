@@ -67,13 +67,14 @@ if uploaded_files:
         all_texts.extend(texts)
 
     # Create FAISS index
-    faiss_index = faiss.IndexFlatL2(embeddings.vector_size)
+    embedding_dimension = embeddings.embedding_ctx_length
+    faiss_index = faiss.IndexFlatL2(embedding_dimension)
     embeddings_matrix = np.array([embeddings.embed_document(text.page_content) for text in all_texts])
     faiss_index.add(embeddings_matrix)
 
     # Save FAISS index to disk
     faiss.write_index(faiss_index, "faiss_index.index")
-    
+
     st.session_state.retriever = faiss_index  # Set the retriever to FAISS index
     st.success("PDFs processed and stored successfully!")
 
