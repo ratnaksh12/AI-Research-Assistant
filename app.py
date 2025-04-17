@@ -67,7 +67,8 @@ if uploaded_files:
         all_texts.extend(texts)
 
     # Create FAISS index
-    embedding_dimension = embeddings.embedding_ctx_length
+    sample_embedding = embeddings.embed_documents(["This is a sample document."])[0]
+    embedding_dimension = len(sample_embedding)
     faiss_index = faiss.IndexFlatL2(embedding_dimension)
     embeddings_matrix = np.array([embeddings.embed_document(text.page_content) for text in all_texts])
     faiss_index.add(embeddings_matrix)
