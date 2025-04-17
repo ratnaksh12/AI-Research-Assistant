@@ -1,10 +1,11 @@
+pip install --upgrade pip
 faiss-cpu==1.7.3
 openai
 langchain==0.1.14
 langchain-community==0.0.32
 langchain-core==0.1.47
 langchain-groq
-chromadb>=0.4.0  # Upgrade chromadb
+chromadb>=0.4.0
 transformers==4.38.2
 torch
 sentence-transformers==2.6.1
