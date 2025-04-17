@@ -1,9 +1,9 @@
 faiss-cpu==1.7.3
 langchain==0.1.14
-langchain-community==0.0.30  # Or try 0.0.31 or 0.0.32
+langchain-community==0.0.30  # Or a compatible version
 langchain-core==0.1.47
 langchain-groq
-chromadb==0.3.21
+chromadb>=0.4.0  # Upgrade chromadb
 transformers==4.38.2
 torch
 sentence-transformers==2.6.1
