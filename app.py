@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import FAISS  # Changed import to FAISS
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain_groq import ChatGroq  # type: ignore
@@ -53,6 +53,7 @@ uploaded_files = st.file_uploader("Upload one or more research papers (PDFs)", t
 
 if uploaded_files:
     all_texts = []
+    documents = []  # Keep track of documents for summary
     for uploaded_file in uploaded_files:
         file_id = str(uuid.uuid4())
         file_path = f"temp_{file_id}.pdf"
@@ -60,27 +61,31 @@ if uploaded_files:
             f.write(uploaded_file.read())
 
         loader = PyPDFLoader(file_path)
-        documents = loader.load()
+        docs = loader.load()
+        documents.extend(docs)
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        texts = text_splitter.split_documents(documents)
+        texts = text_splitter.split_documents(docs)
         all_texts.extend(texts)
+        os.remove(file_path)  # Clean up temporary file
 
     embeddings = HuggingFaceEmbeddings()
-    vectordb = Chroma.from_documents(all_texts, embedding=embeddings, persist_directory="db")
-    vectordb.persist()
+    vectordb = FAISS.from_documents(all_texts, embeddings)  # Use FAISS
     st.session_state.vectordb = vectordb
     st.session_state.retriever = vectordb.as_retriever()
-    st.success("PDFs processed and stored successfully!")
+    st.success("PDFs processed and stored successfully using FAISS!")
 
 # Document Summary Generator
 if uploaded_files and st.button("Generate Summary"):
-    all_text = "\n".join([doc.page_content for doc in documents])
-    summary_prompt = PromptTemplate.from_template("Summarize the following document in simple terms:\n{text}")
-    llm = ChatGroq(temperature=0, groq_api_key=GROQ_API_KEY, model_name="llama3-70b-8192")
+    if 'documents' in locals() and documents:
+        all_text = "\n".join([doc.page_content for doc in documents])
+        summary_prompt = PromptTemplate.from_template("Summarize the following document in simple terms:\n{text}")
+        llm = ChatGroq(temperature=0, groq_api_key=GROQ_API_KEY, model_name="llama3-70b-8192")
 
-    summary = llm.predict(summary_prompt.format(text=all_text[:3000]))  # Limit text size
-    st.markdown("### Document Summary")
-    st.write(summary)
+        summary = llm.predict(summary_prompt.format(text=all_text[:3000]))  # Limit text size
+        st.markdown("### Document Summary")
+        st.write(summary)
+    else:
+        st.warning("Please upload PDF documents first to generate a summary.")
 
 # QA Chat
 if st.session_state.retriever:
@@ -109,6 +114,8 @@ if st.session_state.retriever:
             st.markdown("#### Source(s):")
             for doc in result["source_documents"]:
                 st.code(doc.page_content[:500] + "...")
+else:
+    st.info("Please upload PDF documents to enable the question answering feature.")
 
 # Chat History
 if st.session_state.chat_history:
